@@ -14,9 +14,9 @@ def start_game(player_name=None, player_pokemon=None):
     if not player_name:
         print("""
 ███████████████████████████████████████
-█                                      █
-█  W E L C O M E   T O   P O K É M O N  █
-█                                      █
+█                                       █
+█  WELCOME TO YOUR POKÉMON FIRST BATTLE   █
+█                                       █
 ███████████████████████████████████████    
           
 🔥 Hello everyone! The moment every Pokémon master has been waiting for has arrived!
