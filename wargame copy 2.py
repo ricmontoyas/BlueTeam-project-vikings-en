@@ -1,5 +1,28 @@
 import random
+import pygame
 from vikingsClasses import Viking, Saxon, War
+
+
+# Initialize pygame mixer
+pygame.mixer.init()
+
+# Define paths to music files
+MUSIC_PATHS = {
+    "intro": "week_2\project_vikings\project-vikings-en\BlueTeam-project-vikings-en\Music\Intro_music_edited_1.ogg",
+    "battle": "week_2\project_vikings\project-vikings-en\BlueTeam-project-vikings-en\Music\Battle_track_mixdown.ogg",
+    "victory": "week_2\project_vikings\project-vikings-en\BlueTeam-project-vikings-en\Music\success_mixdown.ogg",
+    "defeat": "week_2\project_vikings\project-vikings-en\BlueTeam-project-vikings-en\Music\defeat_mixdown.ogg"
+}
+
+# Function to play music
+def play_music(track, loop=False):
+    pygame.mixer.music.load(MUSIC_PATHS[track])
+    pygame.mixer.music.play(-1 if loop else 0)  # -1 for looping, 0 for one-time play
+
+# Function to stop music
+def stop_music():
+    pygame.mixer.music.stop()
+
 
 def start_game(player_name=None, player_pokemon=None):
     POKEMON_CHOICES = {
@@ -12,6 +35,7 @@ def start_game(player_name=None, player_pokemon=None):
     }
     
     if not player_name:
+        play_music("intro", loop=True)  # Play intro music in loop
         print("""
 ███████████████████████████████████████
 █                                       █
@@ -26,6 +50,9 @@ It's time to meet Professor Oak and choose your first Pokémon!
 😏 We’ve known each other for a long time, but today, you will begin your journey as a Pokémon Trainer!
 """)
         player_name = input("But first, tell me your name: ")
+
+    stop_music()  # Stop intro music
+    play_music("battle", loop=True)  # Start battle music
     
     print(f"🎮 Welcome, {player_name}! Your adventure begins now!\n")
     
@@ -93,9 +120,15 @@ It's time to meet Professor Oak and choose your first Pokémon!
         if player.health <= 0:
             break
     
+
+    stop_music()  # Stop battle music
+
+
     if player.health > 0:
+        play_music("victory")  # Play victory music
         print("🎉 You won! You have a bright future as a Pokémon master! 🎉")
     else:
+        play_music("defeat")  # Play defeat music
         print("😈 Ha! I proved I'm the best! 😈")
     
     while True:
@@ -110,11 +143,16 @@ It's time to meet Professor Oak and choose your first Pokémon!
     
     if choice == "1":
         print("Restarting battle with the same Pokémon... ⚔️")
+        stop_music()  # Stop current music
+        play_music("battle", loop=True)  # Restart battle music
         start_game(player_name, player_pokemon)
     elif choice == "2":
         print("Restarting... Choose your Pokémon again! 🏆")
+        stop_music()  # Stop current music
+        play_music("battle", loop=True)  # Restart battle music
         start_game()
     elif choice == "3":
+        stop_music()  # Stop music when exiting the game
         print("Goodbye, Pokémon Master! See you on your next adventure! 🎮")
 
 start_game()
