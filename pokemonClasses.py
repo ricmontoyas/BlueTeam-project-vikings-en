@@ -1,11 +1,12 @@
 
 
 class PokemonAttack:
-    def __init__(self, name, description, damage, hit_probability):
+    def __init__(self, name, description, damage, hit_probability, credit_cost):
         self.name = name
         self.description = description
         self.damage = damage
         self.hit_probability = hit_probability
+        self.credit_cost = credit_cost
     
     def getName(self):
         return self.name
@@ -19,6 +20,9 @@ class PokemonAttack:
     def getDamage(self):
         return self.damage
 
+    def getCreditCost(self):
+        return self.credit_cost
+    
 class Pokemon:
     def __init__(self, name, description, health):
         self.name = name

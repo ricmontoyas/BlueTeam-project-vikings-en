@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import random
 from vikingsClasses import Viking, Saxon, War
+from pokemonClasses import Player, Pokemon, PokemonAttack
 
 # Pokémon choices
 POKEMON_CHOICES = {
@@ -28,14 +29,46 @@ class PokemonBattleGame:
         self.gary = None
         self.war = None
         
+        # Init Data
+        ## Type Player
+        self.player1 = ""
+        self.player2 = ""
+        ## List of general able Pokemons 
+        self.pokemons = []
+        ## List of general able Pokemons Attacks
+        self.pokemons_attacks = []
+
+        # Start
         self.start_screen()
         
+    def init_data(self, player1_name, player2_name = "Gary"):
+        # Init players
+        self.player1 = Player(player1_name)
+        self.player2 = Player(player2_name)
+
+        # Init Pokemons
+        self.pokemons.append(Pokemon("Bulbasaur", "Bulbasaur are small, amphibian and plant Pokémon that move on all four legs", 100))
+        self.pokemons.append(Pokemon("Charmander", "Charmander is a bipedal, reptilian Pokémon", 100))
+        self.pokemons.append(Pokemon("Squirtle", "Squirtle is a light-blue turtle creature with a hard brown shell and a long, curly tail.", 100))
+
+        # Init Pokemon Attacks
+        self.pokemons_attacks.append(PokemonAttack("Tackle", "A physical attack in which the user charges and slams into the foe with its whole body.", 10,1 ,2))
+        self.pokemons_attacks.append(PokemonAttack("Scratch", "Scratches the target with sharp claws. Hard, pointed, and sharp claws rake the foe to inflict damage.", 10,1 ,3))
+        self.pokemons_attacks.append(PokemonAttack("Vine Whip", "The Pokémon uses its cruel whips to strike the opponent. Whips the foe with slender vines. 0.8 acuracy", 20,0.8 ,4))
+        self.pokemons_attacks.append(PokemonAttack("Ember", "An attack that may inflict a burn. 0.7 acuracy", 23,0.7 ,4))
+        self.pokemons_attacks.append(PokemonAttack("Water Gun", "The foe is blasted with a forceful shot of water. 0.6 acuracy", 25,0.6 ,4))
+
+
     def start_screen(self):
         self.clear_window()
         tk.Label(self.root, text="Welcome to Pokémon Battle!", font=("Arial", 16)).pack(pady=10)
         tk.Label(self.root, text="Enter your name:").pack()
         self.name_entry = tk.Entry(self.root)
         self.name_entry.pack()
+
+        # Init Data
+        self.init_data(self.name_entry)
+
         tk.Button(self.root, text="Next", command=self.choose_pokemon).pack(pady=10)
     
     def choose_pokemon(self):
