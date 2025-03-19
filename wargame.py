@@ -3,11 +3,13 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 from pokemonClasses import Pokemon, PokemonAttack, Player
+
+# Se requiere Pillow para cargar archivos .jpg
+# Instálalo con: pip install pillow
+from PIL import Image, ImageTk
+
 from pygame import mixer
 
-###############################################
-# Final version: Buttons for replay/exit appear
-# only at the end of the battle, in show_battle_result.
 ###############################################
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +21,7 @@ MUSIC_PATHS = {
     "defeat": os.path.join(BASE_DIR, "defeat_mixdown.ogg")
 }
 
-# Updated attacks with emojis
+# Attacks with emojis
 ATTACK_DATA = {
     "💥Tackle":      {"damage": 15, "accuracy": 0.9},
     "🐾Scratch":     {"damage": 15, "accuracy": 0.9},
@@ -50,12 +52,16 @@ class PokemonGame:
         self.root.title("Pokémon Battle")
         self.root.geometry("700x500")
 
-        # Load images AFTER root is created
+        # Attempt to load professorOak.jpg from _images
+        self.prof_oak_img = self.load_jpeg("professorOak.jpg")
+
+        # Load images for Pokémon 
         self.pokemon_images = {
-            "🍃Bulbasaur": self.load_image("Bulbasaur.gif"),
-            "🔥Charmander": self.load_image("Charmander.gif"),
-            "💧Squirtle":  self.load_image("Squirtle.gif")
+            "🍃Bulbasaur": self.load_tk_image("Bulbasaur.gif"),
+            "🔥Charmander": self.load_tk_image("Charmander.gif"),
+            "💧Squirtle":  self.load_tk_image("Squirtle.gif")
         }
+        # Attack images if needed
         self.attack_images = {
             "💥Tackle":    None,
             "🐾Scratch":   None,
@@ -64,11 +70,17 @@ class PokemonGame:
             "💧Water Gun": None
         }
 
+        # Randomly pick one friend name right here:
+        possible_friends = [
+            "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
+            "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
+        ]
+        self.friend_name = random.choice(possible_friends)
+
         play_music("intro", loop=True)
 
         self.player_name = ""
         self.player_pokemon = None
-        self.friend_name = ""
         self.friend_pokemon = None
 
         self.player_hp = 0
@@ -77,30 +89,56 @@ class PokemonGame:
 
         self.welcome_screen()
 
-    def load_image(self, filename):
-        """Attempt to load an image from _images folder."""
+    def load_jpeg(self, filename):
+        """
+        Loads a JPG image using Pillow and returns a PhotoImage to use in Tkinter.
+        If it fails or doesn't exist, returns None.
+        """
         path = os.path.join(BASE_DIR, "_images", filename)
         if os.path.exists(path):
-            return tk.PhotoImage(file=path, master=self.root)
+            try:
+                pil_img = Image.open(path)
+                return ImageTk.PhotoImage(pil_img)
+            except:
+                return None
+        return None
+
+    def load_tk_image(self, filename):
+        """
+        Loads a .gif or .png with Tk's native PhotoImage (if it fails, returns None).
+        """
+        path = os.path.join(BASE_DIR, "_images", filename)
+        if os.path.exists(path):
+            try:
+                return tk.PhotoImage(file=path, master=self.root)
+            except:
+                return None
         return None
 
     def welcome_screen(self):
-        """First screen: shows introduction text + Next button."""
+        """First screen: shows introduction text + the Oak image + Next button."""
         self.clear_screen()
 
+        # Frame to hold the Oak image, if found
+        if self.prof_oak_img:
+            img_label = tk.Label(self.root, image=self.prof_oak_img)
+            img_label.pack(pady=5)
+
+        # We incorporate the random friend name in the introduction text
+        # instead of "my grandson, Gary!"
         intro_text = (
             "🎮 WELCOME TO YOUR FIRST POKÉMON BATTLE!\n\n"
-            "👋 Hello, future Pokémon Master!\n\n"
-            "🌳 It's time to meet Professor Oak and choose your first Pokémon!\n"
+            "👋 Hello, the moment every Pokémon master has been waiting for has arrived!\n"
+            "🌳 It's time to meet Professor Oak and choose your first Pokémon!\n\n"
             "👴 Professor Oak: Hello there! Welcome to the world of Pokémon!\n"
-            "🤝 My name is Oak, and this here is my grandson, Gary!\n"
+            f"🤝 My name is Oak, and this here is my friend, {self.friend_name}!\n"
             "🚀 We've known each other for a long time, but today, you will begin your journey as a Pokémon Trainer!\n"
         )
 
         tk.Label(
             self.root,
             text=intro_text,
-            font=("Arial", 12),
+            font=("Arial", 14),
             justify="left",
             wraplength=650
         ).pack(pady=20)
@@ -108,7 +146,7 @@ class PokemonGame:
         tk.Button(
             self.root,
             text="Next",
-            font=("Arial", 12),
+            font=("Arial", 14),
             command=self.create_name_screen
         ).pack(pady=10)
 
@@ -119,10 +157,10 @@ class PokemonGame:
         tk.Label(
             self.root,
             text="Please enter your name:",
-            font=("Arial", 12)
-        ).pack(pady=10)
+            font=("Arial", 14)
+        ).pack(pady=20)
 
-        self.name_entry = tk.Entry(self.root, font=("Arial", 12))
+        self.name_entry = tk.Entry(self.root, font=("Arial", 14))
         self.name_entry.pack(pady=5)
         self.name_entry.focus_set()
 
@@ -152,7 +190,7 @@ class PokemonGame:
         tk.Label(
             self.root,
             text=f"Hello {self.player_name}, choose your Pokémon!",
-            font=("Arial", 12)
+            font=("Arial", 14)
         ).pack(pady=10)
 
         self.pokemon_var = tk.StringVar()
@@ -171,7 +209,7 @@ class PokemonGame:
                 text=pokemon,
                 variable=self.pokemon_var,
                 value=pokemon,
-                font=("Arial", 11)
+                font=("Arial", 14)
             ).pack(side=tk.LEFT, padx=10)
 
         tk.Button(
@@ -181,17 +219,10 @@ class PokemonGame:
         ).pack(pady=10)
 
     def start_battle(self):
-        """Assigns the chosen Pokémon, chooses a random friend and their Pokémon, sets HP, then shows them."""
+        """Assigns the chosen Pokémon and chooses a random Pokémon for the friend, sets HP, then shows them."""
         self.player_pokemon = self.pokemon_var.get()
 
-        # random friend
-        possible_friends = [
-            "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
-            "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
-        ]
-        self.friend_name = random.choice(possible_friends)
-
-        # friend's random Pokémon
+        # Friend's random Pokémon
         self.friend_pokemon = random.choice([
             p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
             if p != self.player_pokemon
@@ -218,7 +249,7 @@ class PokemonGame:
         tk.Label(
             images_frame,
             text=f"Your Pokémon: {self.player_pokemon}",
-            font=("Arial", 12, "bold")
+            font=("Arial", 14, "bold")
         ).grid(row=1, column=0)
 
         # Show friend's Pokémon
@@ -228,13 +259,13 @@ class PokemonGame:
         tk.Label(
             images_frame,
             text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}",
-            font=("Arial", 12, "bold")
+            font=("Arial", 14, "bold")
         ).grid(row=1, column=1)
 
         tk.Label(
             self.root,
             text=self.battle_log,
-            font=("Arial", 12),
+            font=("Arial", 14),
             wraplength=650,
             justify="left"
         ).pack(pady=10)
@@ -259,7 +290,7 @@ class PokemonGame:
         tk.Label(
             top_frame,
             text=f"Your Pokémon: {self.player_pokemon}\nHP: {self.player_hp}",
-            font=("Arial", 12),
+            font=("Arial", 14),
             justify="center"
         ).grid(row=0, column=1)
 
@@ -270,14 +301,14 @@ class PokemonGame:
         tk.Label(
             top_frame,
             text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}\nHP: {self.friend_hp}",
-            font=("Arial", 12),
+            font=("Arial", 14),
             justify="center"
         ).grid(row=0, column=3)
 
         tk.Label(
             self.root,
             text="Choose an attack:",
-            font=("Arial", 12)
+            font=("Arial", 14)
         ).pack(pady=5)
 
         self.attack_var = tk.StringVar()
@@ -309,7 +340,7 @@ class PokemonGame:
             tk.Label(
                 self.root,
                 text=self.battle_log,
-                font=("Arial", 12),
+                font=("Arial", 14),
                 justify="left",
                 wraplength=650,
                 fg="blue"
@@ -422,28 +453,27 @@ class PokemonGame:
         ).pack(pady=5)
 
     def rematch_same(self):
-        """Rematch with the same Pokémon vs. new random friend + Pokémon."""
+        """Rematch with the same Pokémon vs. same random friend name, but new random Pokémon."""
         stop_music()
         play_music("battle", loop=True)
 
-        # Pick new friend + new random Pokémon
-        possible_friends = [
-            "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
-            "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
-        ]
-        self.friend_name = random.choice(possible_friends)
+        # If you want a new friend each time, un-comment the code below:
+        # possible_friends = [
+        #     "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
+        #     "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
+        # ]
+        # self.friend_name = random.choice(possible_friends)
+
         self.friend_pokemon = random.choice([
             p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
             if p != self.player_pokemon
         ])
-
         self.player_hp = 60
         self.friend_hp = 60
-        # Start battle again
         self.battle_screen()
 
     def rematch_different(self):
-        """Pick a brand new Pokémon."""
+        """Pick a brand new Pokémon (same friend name)."""
         stop_music()
         play_music("battle", loop=True)
         self.choose_pokemon()
