@@ -134,7 +134,7 @@ class PokemonGame:
             font=("Arial", 14),
             justify="left",
             wraplength=650
-        ).pack(pady=20)
+        ).pack(pady=10)
 
         tk.Button(
             self.root,
@@ -191,7 +191,7 @@ class PokemonGame:
 
             img = self.pokemon_images[pokemon]
             if img:
-                tk.Label(frm, image=img).pack(side=tk.LEFT)
+                tk.Label(frm, image=img).pack(side=tk.LEFT, padx=50)
 
             tk.Radiobutton(
                 frm,
@@ -199,7 +199,7 @@ class PokemonGame:
                 variable=self.pokemon_var,
                 value=pokemon,
                 font=("Arial", 14)
-            ).pack(side=tk.LEFT, padx=10)
+            ).pack(side=tk.LEFT, padx=0)
 
         tk.Button(
             self.root,
@@ -214,8 +214,8 @@ class PokemonGame:
             if p != self.player_pokemon
         ])
 
-        self.player_hp = 60
-        self.friend_hp = 60
+        self.player_hp = 100
+        self.friend_hp = 100
 
         self.battle_log = (
             f"You chose {self.player_pokemon}! "
@@ -226,7 +226,7 @@ class PokemonGame:
         self.clear_screen()
 
         images_frame = tk.Frame(self.root)
-        images_frame.pack(pady=10)
+        images_frame.pack(pady=40)
 
         # Player
         player_img = self.pokemon_images[self.player_pokemon]
@@ -318,7 +318,7 @@ class PokemonGame:
                 text=atk,
                 variable=self.attack_var,
                 value=atk
-            ).pack(side=tk.LEFT, padx=5)
+            ).pack(side=tk.LEFT, padx=300)
 
         tk.Button(
             self.root,
