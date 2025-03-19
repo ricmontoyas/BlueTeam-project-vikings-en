@@ -6,13 +6,12 @@ from pokemonClasses import Pokemon, PokemonAttack, Player
 from pygame import mixer
 
 ###############################################
-# Code updated to set focus on the name entry.
+# Final version: Buttons for replay/exit appear
+# only at the end of the battle, in show_battle_result.
 ###############################################
 
-# Get the current directory path of wargame.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Music files stored in the same folder as wargame.py
 MUSIC_PATHS = {
     "intro": os.path.join(BASE_DIR, "Intro_music_edited_1.ogg"),
     "battle": os.path.join(BASE_DIR, "Battle_track_mixdown.ogg"),
@@ -20,20 +19,19 @@ MUSIC_PATHS = {
     "defeat": os.path.join(BASE_DIR, "defeat_mixdown.ogg")
 }
 
-# Attack dictionary - updated so it takes at least two hits to win
+# Updated attacks with emojis
 ATTACK_DATA = {
-    "Tackle":      {"damage": 15, "accuracy": 0.9},
-    "Scratch":     {"damage": 15, "accuracy": 0.9},
-    "Vine Whip":   {"damage": 25, "accuracy": 0.8},
-    "Ember":       {"damage": 25, "accuracy": 0.8},
-    "Water Gun":   {"damage": 25, "accuracy": 0.8}
+    "💥Tackle":      {"damage": 15, "accuracy": 0.9},
+    "🐾Scratch":     {"damage": 15, "accuracy": 0.9},
+    "🌱Vine Whip":   {"damage": 25, "accuracy": 0.8},
+    "🔥Ember":       {"damage": 25, "accuracy": 0.8},
+    "💧Water Gun":   {"damage": 25, "accuracy": 0.8}
 }
 
-# Each Pokémon's available attacks
 POKEMON_ATTACKS = {
-    "🍃Bulbasaur": ["Tackle", "Scratch", "Vine Whip"],
-    "🔥Charmander": ["Tackle", "Scratch", "Ember"],
-    "💧Squirtle":  ["Tackle", "Scratch", "Water Gun"]
+    "🍃Bulbasaur": ["💥Tackle", "🐾Scratch", "🌱Vine Whip"],
+    "🔥Charmander": ["💥Tackle", "🐾Scratch", "🔥Ember"],
+    "💧Squirtle":  ["💥Tackle", "🐾Scratch", "💧Water Gun"]
 }
 
 # Initialize pygame mixer
@@ -52,57 +50,51 @@ class PokemonGame:
         self.root.title("Pokémon Battle")
         self.root.geometry("700x500")
 
-        # Load images AFTER we have a Tk root
+        # Load images AFTER root is created
         self.pokemon_images = {
             "🍃Bulbasaur": self.load_image("Bulbasaur.gif"),
             "🔥Charmander": self.load_image("Charmander.gif"),
             "💧Squirtle":  self.load_image("Squirtle.gif")
         }
-        # If you have attack images, load them here:
         self.attack_images = {
-            "Tackle":    None,
-            "Scratch":   None,
-            "Vine Whip": None,
-            "Ember":     None,
-            "Water Gun": None
+            "💥Tackle":    None,
+            "🐾Scratch":   None,
+            "🌱Vine Whip": None,
+            "🔥Ember":     None,
+            "💧Water Gun": None
         }
 
-        # Start intro music
         play_music("intro", loop=True)
 
-        # Game state variables
         self.player_name = ""
         self.player_pokemon = None
-        self.gary_pokemon = None
+        self.friend_name = ""
+        self.friend_pokemon = None
 
-        # Both start with 60 HP to prevent a single-hit win
         self.player_hp = 0
-        self.gary_hp = 0
-
-        # Partial log of the battle
+        self.friend_hp = 0
         self.battle_log = ""
 
-        # Step 1: Show only introduction text + Next button
         self.welcome_screen()
 
     def load_image(self, filename):
-        """Load images from _images folder, linked to the existing Tk root."""
+        """Attempt to load an image from _images folder."""
         path = os.path.join(BASE_DIR, "_images", filename)
         if os.path.exists(path):
             return tk.PhotoImage(file=path, master=self.root)
         return None
 
     def welcome_screen(self):
-        """First screen with ONLY the introduction text and a Next button."""
+        """First screen: shows introduction text + Next button."""
         self.clear_screen()
 
         intro_text = (
-            "WELCOME TO YOUR FIRST POKÉMON BATTLE!\n\n"
-            "Hello, future Pokémon Master!\n\n"
-            "It's time to meet Professor Oak and choose your first Pokémon!\n"
-            "Professor Oak: Hello there! Welcome to the world of Pokémon!\n"
-            "My name is Oak, and this here is my grandson, Gary!\n"
-            "We've known each other for a long time, but today, you will begin your journey as a Pokémon Trainer!\n"
+            "🎮 WELCOME TO YOUR FIRST POKÉMON BATTLE!\n\n"
+            "👋 Hello, future Pokémon Master!\n\n"
+            "🌳 It's time to meet Professor Oak and choose your first Pokémon!\n"
+            "👴 Professor Oak: Hello there! Welcome to the world of Pokémon!\n"
+            "🤝 My name is Oak, and this here is my grandson, Gary!\n"
+            "🚀 We've known each other for a long time, but today, you will begin your journey as a Pokémon Trainer!\n"
         )
 
         tk.Label(
@@ -121,7 +113,7 @@ class PokemonGame:
         ).pack(pady=10)
 
     def create_name_screen(self):
-        """Second screen: ask for player's name + a Continue button."""
+        """Second screen: asks for player's name, then 'Continue'."""
         self.clear_screen()
 
         tk.Label(
@@ -132,8 +124,6 @@ class PokemonGame:
 
         self.name_entry = tk.Entry(self.root, font=("Arial", 12))
         self.name_entry.pack(pady=5)
-
-        # <-- Focus immediately on this entry box
         self.name_entry.focus_set()
 
         tk.Button(
@@ -144,20 +134,19 @@ class PokemonGame:
         ).pack(pady=10)
 
     def intro_continue(self):
-        """ Gets the player's name and proceeds to Pokémon selection. """
+        """Stores player's name and moves on to choose a Pokémon."""
         name = self.name_entry.get().strip()
         if not name:
             messagebox.showwarning("Warning", "Please enter a valid name!")
             return
 
         self.player_name = name
-        stop_music()       # stop intro music
+        stop_music()
         play_music("battle", loop=True)
-
         self.choose_pokemon()
 
     def choose_pokemon(self):
-        """ Screen for choosing a Pokémon. """
+        """Screen to select Bulbasaur, Charmander, or Squirtle."""
         self.clear_screen()
 
         tk.Label(
@@ -169,12 +158,10 @@ class PokemonGame:
         self.pokemon_var = tk.StringVar()
         self.pokemon_var.set("🍃Bulbasaur")
 
-        # Display each Pokémon along with its image
         for pokemon in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]:
             frm = tk.Frame(self.root)
             frm.pack(anchor=tk.W, pady=5)
 
-            # Show Pokémon image if available
             img = self.pokemon_images[pokemon]
             if img:
                 tk.Label(frm, image=img).pack(side=tk.LEFT)
@@ -194,35 +181,55 @@ class PokemonGame:
         ).pack(pady=10)
 
     def start_battle(self):
-        """ Assigns the chosen Pokémon, Gary's Pokémon, HP, and shows a screen with both images. """
+        """Assigns the chosen Pokémon, chooses a random friend and their Pokémon, sets HP, then shows them."""
         self.player_pokemon = self.pokemon_var.get()
-        self.gary_pokemon = random.choice([
+
+        # random friend
+        possible_friends = [
+            "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
+            "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
+        ]
+        self.friend_name = random.choice(possible_friends)
+
+        # friend's random Pokémon
+        self.friend_pokemon = random.choice([
             p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
             if p != self.player_pokemon
         ])
 
         self.player_hp = 60
-        self.gary_hp = 60
+        self.friend_hp = 60
+
         self.battle_log = (
-            f"You chose {self.player_pokemon}! Gary chose {self.gary_pokemon}!\n"
-            f"Let the battle begin!\n"
+            f"You chose {self.player_pokemon}! "
+            f"{self.friend_name} chose {self.friend_pokemon}!\n"
+            "Let the battle begin!\n"
         )
 
         self.clear_screen()
 
-        # Show both images side by side
         images_frame = tk.Frame(self.root)
         images_frame.pack(pady=10)
 
+        # Show player's Pokémon
         player_img = self.pokemon_images[self.player_pokemon]
         if player_img:
             tk.Label(images_frame, image=player_img).grid(row=0, column=0, padx=20)
-        tk.Label(images_frame, text=self.player_pokemon, font=("Arial", 12, "bold")).grid(row=1, column=0)
+        tk.Label(
+            images_frame,
+            text=f"Your Pokémon: {self.player_pokemon}",
+            font=("Arial", 12, "bold")
+        ).grid(row=1, column=0)
 
-        gary_img = self.pokemon_images[self.gary_pokemon]
-        if gary_img:
-            tk.Label(images_frame, image=gary_img).grid(row=0, column=1, padx=20)
-        tk.Label(images_frame, text=self.gary_pokemon, font=("Arial", 12, "bold")).grid(row=1, column=1)
+        # Show friend's Pokémon
+        friend_img = self.pokemon_images[self.friend_pokemon]
+        if friend_img:
+            tk.Label(images_frame, image=friend_img).grid(row=0, column=1, padx=20)
+        tk.Label(
+            images_frame,
+            text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}",
+            font=("Arial", 12, "bold")
+        ).grid(row=1, column=1)
 
         tk.Label(
             self.root,
@@ -239,30 +246,30 @@ class PokemonGame:
         ).pack(pady=10)
 
     def battle_screen(self):
-        """ Screen that shows the battle interface: HP bars and attack selection. """
+        """Main battle interface: HP, attacks, battle log, but NO replay/exit buttons yet."""
         self.clear_screen()
 
         top_frame = tk.Frame(self.root)
         top_frame.pack(pady=10)
 
-        # Player's Pokémon image and HP
+        # Left: player's Pokémon
         player_img = self.pokemon_images[self.player_pokemon]
         if player_img:
             tk.Label(top_frame, image=player_img).grid(row=0, column=0, padx=10)
         tk.Label(
             top_frame,
-            text=f"{self.player_pokemon}\nHP: {self.player_hp}",
+            text=f"Your Pokémon: {self.player_pokemon}\nHP: {self.player_hp}",
             font=("Arial", 12),
             justify="center"
         ).grid(row=0, column=1)
 
-        # Gary's Pokémon image and HP
-        gary_img = self.pokemon_images[self.gary_pokemon]
-        if gary_img:
-            tk.Label(top_frame, image=gary_img).grid(row=0, column=2, padx=10)
+        # Right: friend's Pokémon
+        friend_img = self.pokemon_images[self.friend_pokemon]
+        if friend_img:
+            tk.Label(top_frame, image=friend_img).grid(row=0, column=2, padx=10)
         tk.Label(
             top_frame,
-            text=f"{self.gary_pokemon}\nHP: {self.gary_hp}",
+            text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}\nHP: {self.friend_hp}",
             font=("Arial", 12),
             justify="center"
         ).grid(row=0, column=3)
@@ -297,72 +304,89 @@ class PokemonGame:
             command=self.perform_attack
         ).pack(pady=10)
 
+        # Show the log from the last move, if any
+        if self.battle_log.strip():
+            tk.Label(
+                self.root,
+                text=self.battle_log,
+                font=("Arial", 12),
+                justify="left",
+                wraplength=650,
+                fg="blue"
+            ).pack(pady=5)
+
     def perform_attack(self):
-        """ The player attacks, then Gary attacks, updating HP and checking for victory. """
+        """Perform player's attack, then friend's counterattack, then refresh UI."""
         attack_used = self.attack_var.get()
         accuracy = ATTACK_DATA[attack_used]["accuracy"]
         damage = ATTACK_DATA[attack_used]["damage"]
 
-        if random.random() <= accuracy:
-            if damage <= 15:
-                extra_msg = "\nNice try!"
-            elif damage <= 20:
-                extra_msg = "\nAverage Attack!"
-            else:
-                extra_msg = "\nGreat Attack!"
+        # Determine the message based on damage
+        if damage <= 15:
+            extra_msg = "\nSoft Attack!"
+        elif damage <= 20:
+            extra_msg = "\nAverage Attack!!"
+        else:
+            extra_msg = "\nSUPER POWER!!!"
 
-            self.gary_hp -= damage
+        # Player attacks
+        if random.random() <= accuracy:
+            self.friend_hp -= damage
             text_hit = (
-                f"{self.player_pokemon} used {attack_used}! "
-                f"It hits Gary's {self.gary_pokemon} for {damage} damage!" + extra_msg
+                f"Your {self.player_pokemon} used {attack_used}! "
+                f"It hits {self.friend_name}'s {self.friend_pokemon} for {damage} damage!{extra_msg}"
             )
         else:
-            text_hit = f"{self.player_pokemon} used {attack_used} but missed!"
+            text_hit = f"Your {self.player_pokemon} used {attack_used} but missed!"
 
-        # Check if Gary is defeated
-        if self.gary_hp <= 0:
+        # Check if friend fainted
+        if self.friend_hp <= 0:
             stop_music()
             play_music("victory")
-            self.gary_hp = 0
-            self.show_battle_result(text_hit, "You won!")
+            self.friend_hp = 0
+            final_text = text_hit
+            self.show_battle_result(final_text, "You won!")
             return
 
-        # GARY attacks back
-        gary_attack = random.choice(POKEMON_ATTACKS[self.gary_pokemon])
-        gary_acc = ATTACK_DATA[gary_attack]["accuracy"]
-        gary_dmg = ATTACK_DATA[gary_attack]["damage"]
-        if random.random() <= gary_acc:
-            if gary_dmg <= 15:
-                extra_msg_gary = "\nNice try!"
-            elif gary_dmg <= 20:
-                extra_msg_gary = "\nAverage Attack!"
-            else:
-                extra_msg_gary = "\nGreat Attack!"
+        # Friend's turn
+        friend_attack = random.choice(POKEMON_ATTACKS[self.friend_pokemon])
+        f_accuracy = ATTACK_DATA[friend_attack]["accuracy"]
+        f_damage = ATTACK_DATA[friend_attack]["damage"]
 
-            self.player_hp -= gary_dmg
-            text_gary = (
-                f"Gary's {self.gary_pokemon} used {gary_attack}! "
-                f"It hits your {self.player_pokemon} for {gary_dmg} damage!" + extra_msg_gary
+        # Friend's extra message based on damage
+        if f_damage <= 15:
+            friend_extra = "\nSoft Attack!"
+        elif f_damage <= 20:
+            friend_extra = "\nAverage Attack!!"
+        else:
+            friend_extra = "\nSUPER POWER!!!"
+
+        if random.random() <= f_accuracy:
+            self.player_hp -= f_damage
+            text_friend = (
+                f"{self.friend_name}'s {self.friend_pokemon} used {friend_attack}! "
+                f"It hits your {self.player_pokemon} for {f_damage} damage!{friend_extra}"
             )
         else:
-            text_gary = (
-                f"Gary's {self.gary_pokemon} used {gary_attack} but missed!"
+            text_friend = (
+                f"{self.friend_name}'s {self.friend_pokemon} used {friend_attack} but missed!"
             )
 
-        # Check if player is defeated
+        # Check if player's fainted
         if self.player_hp <= 0:
             stop_music()
             play_music("defeat")
             self.player_hp = 0
-            self.show_battle_result(f"{text_hit}\n{text_gary}", "Gary won!")
+            final_text = f"{text_hit}\n{text_friend}"
+            self.show_battle_result(final_text, f"{self.friend_name} won!")
             return
 
-        # If battle continues, update screen
-        self.battle_log = f"{text_hit}\n{text_gary}\n"
+        # If still both are alive, update the log
+        self.battle_log = f"{text_hit}\n{text_friend}\n"
         self.battle_screen()
 
     def show_battle_result(self, last_moves, final_result):
-        """ Displays the final result and options to replay. """
+        """Show the final result with options to replay or exit."""
         self.clear_screen()
 
         tk.Label(
@@ -398,17 +422,28 @@ class PokemonGame:
         ).pack(pady=5)
 
     def rematch_same(self):
+        """Rematch with the same Pokémon vs. new random friend + Pokémon."""
         stop_music()
         play_music("battle", loop=True)
-        self.gary_pokemon = random.choice([
+
+        # Pick new friend + new random Pokémon
+        possible_friends = [
+            "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
+            "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
+        ]
+        self.friend_name = random.choice(possible_friends)
+        self.friend_pokemon = random.choice([
             p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
             if p != self.player_pokemon
         ])
+
         self.player_hp = 60
-        self.gary_hp = 60
+        self.friend_hp = 60
+        # Start battle again
         self.battle_screen()
 
     def rematch_different(self):
+        """Pick a brand new Pokémon."""
         stop_music()
         play_music("battle", loop=True)
         self.choose_pokemon()
