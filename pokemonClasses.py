@@ -7,28 +7,15 @@ class PokemonAttack:
         self.damage = damage
         self.hit_probability = hit_probability
         self.credit_cost = credit_cost
-    
-    def getName(self):
-        return self.name
-    
-    def getDescription(self):
-        return self.description
-    
-    def getProbability(self):
-        return self.hit_probability
-    
-    def getDamage(self):
-        return self.damage
 
-    def getCreditCost(self):
-        return self.credit_cost
     
 class Pokemon:
-    def __init__(self, name, description, health):
+    def __init__(self, name, description, health, image):
         self.name = name
         self.description = description
         self.health = health
         self.pokemon_attacks = []
+        self.image = image
     
     def addAtack(self, attack):
         self.pokemon_attacks.append(attack)
@@ -39,18 +26,6 @@ class Pokemon:
             return f"{self.name} has received {damage} points of damage"
         else:
             return f"{self.name} has died in combat"
-        
-    def getName(self):
-        return self.name
-    
-    def getDescription(self):
-        return self.description
-    
-    def getHealth(self):
-        return self.health
-
-    def getAttacks(self):
-        return self.pokemon_attacks
     
 
 class Player:
@@ -58,18 +33,11 @@ class Player:
         self.name = name
         self.pokemons = []
         self.credits = credits
+        self.hp_label = ""
 
     def addPokemon(self, pokemon):
         self.pokemons.append(pokemon)
 
-    def getName(self):
-        return self.name
-    
-    def getPokemons(self):
-        return self.pokemons
-    
-    def getCredits(self):
-        return self.credits
     
 
 

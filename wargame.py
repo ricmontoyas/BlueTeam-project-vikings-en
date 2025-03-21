@@ -54,12 +54,12 @@ class PokemonGame:
         # Load Oak image
         self.prof_oak_img = self.load_jpeg("professorOak.jpg")
 
+        # Init Data
+        self.init_data()
+
+
         # Load Pokémon images
-        self.pokemon_images = {
-            "🍃Bulbasaur": self.load_tk_image("Bulbasaur.gif"),
-            "🔥Charmander": self.load_tk_image("Charmander.gif"),
-            "💧Squirtle":  self.load_tk_image("Squirtle.gif")
-        }
+        
         self.attack_images = {
             "💥Tackle":    None,
             "🐾Scratch":   None,
@@ -73,25 +73,49 @@ class PokemonGame:
             "David", "Jorge", "Tayna", "Eduardo", "Luis", "Marc",
             "Maria", "Nancy", "Patricia", "Stefano", "Zeynep"
         ]
-        self.friend_name = random.choice(possible_friends)
+        self.player2.name = random.choice(possible_friends)
 
-        # Initial game state
-        self.player_name = ""
-        self.player_pokemon = None
-        self.friend_pokemon = None
+
+        # Init Data
+        ## Type Player
+        ## List of general able Pokemons 
+        self.pokemons = []
+        ## List of general able Pokemons Attacks
+        self.pokemons_attacks = []
+
+        self.init_pokemons_data()
+
 
         self.player_hp = 0
         self.friend_hp = 0
 
         # We will reference these labels for HP animation
-        self.player_hp_label = None
-        self.friend_hp_label = None
+        self.player1.hp_label = None
+        self.player2.hp_label  = None
 
         self.battle_log = ""
 
         play_music("intro", loop=True)
 
         self.welcome_screen()
+
+    def init_data(self, player1_name = "", player2_name = ""):
+        # Init players
+        self.player1 = Player(player1_name)
+        self.player2 = Player(player2_name)
+
+    def init_pokemons_data(self):
+        # Init Pokemons
+        self.pokemons.append(Pokemon("🍃Bulbasaur", "Bulbasaur are small, amphibian and plant Pokémon that move on all four legs", 100, self.load_tk_image("Bulbasaur.gif")))
+        self.pokemons.append(Pokemon("🔥Charmander", "Charmander is a bipedal, reptilian Pokémon", 100, self.load_tk_image("Charmander.gif")))
+        self.pokemons.append(Pokemon("💧Squirtle", "Squirtle is a light-blue turtle creature with a hard brown shell and a long, curly tail.", 100,self.load_tk_image("Squirtle.gif")))
+
+        # Init Pokemon Attacks
+        self.pokemons_attacks.append(PokemonAttack("Tackle", "A physical attack in which the user charges and slams into the foe with its whole body.", 10,1 ,2))
+        self.pokemons_attacks.append(PokemonAttack("Scratch", "Scratches the target with sharp claws. Hard, pointed, and sharp claws rake the foe to inflict damage.", 10,1 ,3))
+        self.pokemons_attacks.append(PokemonAttack("Vine Whip", "The Pokémon uses its cruel whips to strike the opponent. Whips the foe with slender vines. 0.8 acuracy", 20,0.8 ,4))
+        self.pokemons_attacks.append(PokemonAttack("Ember", "An attack that may inflict a burn. 0.7 acuracy", 23,0.7 ,4))
+        self.pokemons_attacks.append(PokemonAttack("Water Gun", "The foe is blasted with a forceful shot of water. 0.6 acuracy", 25,0.6 ,4))
 
     def load_jpeg(self, filename):
         path = os.path.join(BASE_DIR, "_images", filename)
@@ -124,7 +148,7 @@ class PokemonGame:
             "👋 Hello, the moment every Pokémon master has been waiting for has arrived!\n"
             "🌳 It's time to meet Professor Oak and choose your first Pokémon!\n\n"
             "👴 Professor Oak: Hello there! Welcome to the world of Pokémon!\n"
-            f"🤝 My name is Oak, and this here is my friend, {self.friend_name}!\n"
+            f"🤝 My name is Oak, and this here is my friend, {self.player2.name}!\n"
             "🚀 We've known each other for a long time, but today, you will begin your journey as a Pokémon Trainer!\n"
         )
 
@@ -155,7 +179,7 @@ class PokemonGame:
         self.name_entry = tk.Entry(self.root, font=("Arial", 14))
         self.name_entry.pack(pady=5)
         self.name_entry.focus_set()
-
+        
         tk.Button(
             self.root,
             text="Continue",
@@ -169,7 +193,7 @@ class PokemonGame:
             messagebox.showwarning("Warning", "Please enter a valid name!")
             return
 
-        self.player_name = name
+        self.player1.name = name
         stop_music()
         play_music("battle", loop=True)
         self.choose_pokemon()
@@ -178,26 +202,26 @@ class PokemonGame:
         self.clear_screen()
         tk.Label(
             self.root,
-            text=f"Hello {self.player_name}, choose your Pokémon!",
+            text=f"Hello {self.player1.name}, choose your Pokémon!",
             font=("Arial", 14)
         ).pack(pady=10)
 
-        self.pokemon_var = tk.StringVar()
-        self.pokemon_var.set("🍃Bulbasaur")
+        self.player1.pokemons = tk.StringVar()
+        self.player1.pokemons.set("🍃Bulbasaur")
 
-        for pokemon in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]:
+        for pokemon in self.pokemons:
             frm = tk.Frame(self.root)
             frm.pack(anchor=tk.W, pady=5)
 
-            img = self.pokemon_images[pokemon]
+            img = pokemon.image
             if img:
                 tk.Label(frm, image=img).pack(side=tk.LEFT, padx=50)
 
             tk.Radiobutton(
                 frm,
-                text=pokemon,
-                variable=self.pokemon_var,
-                value=pokemon,
+                text=pokemon.name,
+                variable=self.player1.pokemons,
+                value=pokemon.name,
                 font=("Arial", 14)
             ).pack(side=tk.LEFT, padx=0)
 
@@ -208,18 +232,25 @@ class PokemonGame:
         ).pack(pady=10)
 
     def start_battle(self):
-        self.player_pokemon = self.pokemon_var.get()
-        self.friend_pokemon = random.choice([
-            p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
-            if p != self.player_pokemon
+        current_pokemon =  self.player1.pokemons.get()
+        if current_pokemon in self.pokemons[0].name:
+            self.player1.pokemons = self.pokemons[0]
+        elif current_pokemon in self.pokemons[1].name:
+            self.player1.pokemons = self.pokemons[1]
+        elif current_pokemon in self.pokemons[2].name:
+            self.player1.pokemons = self.pokemons[2]
+
+        self.player2.pokemons = random.choice([
+            p for p in self.pokemons
+            if p != self.player1.pokemons
         ])
 
         self.player_hp = 100
         self.friend_hp = 100
-
+    
         self.battle_log = (
-            f"You chose {self.player_pokemon}! "
-            f"{self.friend_name} chose {self.friend_pokemon}!\n"
+            f"You chose {self.player1.pokemons.name}! "
+            f"{self.player2.name} chose {self.player2.pokemons.name}!\n"
             "Let the battle begin!\n"
         )
 
@@ -229,22 +260,22 @@ class PokemonGame:
         images_frame.pack(pady=40)
 
         # Player
-        player_img = self.pokemon_images[self.player_pokemon]
+        player_img = self.player1.pokemons.image
         if player_img:
             tk.Label(images_frame, image=player_img).grid(row=0, column=0, padx=20)
         tk.Label(
             images_frame,
-            text=f"Your Pokémon: {self.player_pokemon}",
+            text=f"Your Pokémon: {self.player1.pokemons.name}",
             font=("Arial", 14, "bold")
         ).grid(row=1, column=0)
 
         # Friend
-        friend_img = self.pokemon_images[self.friend_pokemon]
+        friend_img = self.player2.pokemons.image
         if friend_img:
             tk.Label(images_frame, image=friend_img).grid(row=0, column=1, padx=20)
         tk.Label(
             images_frame,
-            text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}",
+            text=f"{self.player2.name}'s Pokémon: {self.player2.pokemons.name}",
             font=("Arial", 14, "bold")
         ).grid(row=1, column=1)
 
@@ -270,31 +301,31 @@ class PokemonGame:
         top_frame.pack(pady=10)
 
         # Player
-        player_img = self.pokemon_images[self.player_pokemon]
+        player_img = self.player1.pokemons.image
         if player_img:
             tk.Label(top_frame, image=player_img).grid(row=0, column=0, padx=10)
 
         # store references in self.player_hp_label for animation
-        self.player_hp_label = tk.Label(
+        self.player1.hp_label = tk.Label(
             top_frame,
-            text=f"Your Pokémon: {self.player_pokemon}\nHP: {self.player_hp}",
+            text=f"Your Pokémon: {self.player1.pokemons.name}\nHP: {self.player_hp}",
             font=("Arial", 14),
             justify="center"
         )
-        self.player_hp_label.grid(row=0, column=1)
+        self.player1.hp_label.grid(row=0, column=1)
 
         # Friend
-        friend_img = self.pokemon_images[self.friend_pokemon]
+        friend_img = self.player2.pokemons.image
         if friend_img:
             tk.Label(top_frame, image=friend_img).grid(row=0, column=2, padx=10)
 
-        self.friend_hp_label = tk.Label(
+        self.player2.hp_label  = tk.Label(
             top_frame,
-            text=f"{self.friend_name}'s Pokémon: {self.friend_pokemon}\nHP: {self.friend_hp}",
+            text=f"{self.player2.name}'s Pokémon: {self.player2.pokemons.name}\nHP: {self.friend_hp}",
             font=("Arial", 14),
             justify="center"
         )
-        self.friend_hp_label.grid(row=0, column=3)
+        self.player2.hp_label.grid(row=0, column=3)
 
         tk.Label(
             self.root,
@@ -303,7 +334,7 @@ class PokemonGame:
         ).pack(pady=5)
 
         self.attack_var = tk.StringVar()
-        attacks = POKEMON_ATTACKS[self.player_pokemon]
+        attacks = POKEMON_ATTACKS[self.player1.pokemons.name]
         self.attack_var.set(attacks[0])
 
         for atk in attacks:
@@ -368,13 +399,13 @@ class PokemonGame:
             # friend takes damage
             new_friend_hp = self.friend_hp - damage
             text_hit = (
-                f"Your {self.player_pokemon} used {attack_used}! "
-                f"It hits {self.friend_name}'s {self.friend_pokemon} for {damage} damage!{extra_msg}"
+                f"Your {self.player1.pokemons.name} used {attack_used}! "
+                f"It hits {self.player2.name}'s {self.player2.pokemons.name} for {damage} damage!{extra_msg}"
             )
         else:
             # Miss
             new_friend_hp = self.friend_hp
-            text_hit = f"Your {self.player_pokemon} used {attack_used} but missed!"
+            text_hit = f"Your {self.player1.pokemons.name} used {attack_used} but missed!"
 
         # We'll animate friend HP, then do the rest
         def after_friend_animation():
@@ -390,7 +421,7 @@ class PokemonGame:
                 return
 
             # Otherwise, friend counterattacks
-            friend_attack = random.choice(POKEMON_ATTACKS[self.friend_pokemon])
+            friend_attack = random.choice(POKEMON_ATTACKS[self.player2.pokemons.name])
             f_accuracy = ATTACK_DATA[friend_attack]["accuracy"]
             f_damage = ATTACK_DATA[friend_attack]["damage"]
 
@@ -405,13 +436,13 @@ class PokemonGame:
             if random.random() <= f_accuracy:
                 new_player_hp = self.player_hp - f_damage
                 text_friend = (
-                    f"{self.friend_name}'s {self.friend_pokemon} used {friend_attack}! "
-                    f"It hits your {self.player_pokemon} for {f_damage} damage!{friend_extra}"
+                    f"{self.player2.name}'s {self.player2.pokemons.name} used {friend_attack}! "
+                    f"It hits your {self.player1.pokemons.name} for {f_damage} damage!{friend_extra}"
                 )
             else:
                 new_player_hp = self.player_hp
                 text_friend = (
-                    f"{self.friend_name}'s {self.friend_pokemon} used {friend_attack} but missed!"
+                    f"{self.player2.name}'s {self.player2.pokemons.name} used {friend_attack} but missed!"
                 )
 
             # Animate player's HP now
@@ -422,7 +453,7 @@ class PokemonGame:
                     stop_music()
                     play_music("defeat")
                     final_text = f"{text_hit}\n{text_friend}"
-                    self.show_battle_result(final_text, f"{self.friend_name} won!")
+                    self.show_battle_result(final_text, f"{self.player2.name} won!")
                     return
 
                 # If both alive, update log and reload battle screen
@@ -433,7 +464,7 @@ class PokemonGame:
             self.animate_hp_decrease(
                 self.player_hp,
                 new_player_hp,
-                self.player_hp_label,
+                self.player1.hp_label,
                 after_player_animation
             )
 
@@ -441,7 +472,7 @@ class PokemonGame:
         self.animate_hp_decrease(
             self.friend_hp,
             new_friend_hp,
-            self.friend_hp_label,
+            self.player2.hp_label,
             after_friend_animation
         )
 
@@ -484,10 +515,10 @@ class PokemonGame:
         stop_music()
         play_music("battle", loop=True)
 
-        # Keep same friend_name, but random new friend Pokémon
-        self.friend_pokemon = random.choice([
+        # Keep same player2.name, but random new friend Pokémon
+        self.player2.pokemons.name = random.choice([
             p for p in ["🍃Bulbasaur", "🔥Charmander", "💧Squirtle"]
-            if p != self.player_pokemon
+            if p != self.player1.pokemons.name
         ])
         self.player_hp = 60
         self.friend_hp = 60
