@@ -13,7 +13,7 @@ from pygame import mixer
 # EXAMPLE: HP animation with after()
 ###############################################
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = ""
 
 MUSIC_PATHS = {
     "intro": os.path.join(BASE_DIR, "Intro_music_edited_1.ogg"),
